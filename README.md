@@ -2,17 +2,20 @@
 
 ![Github Test Status](https://github.com/mqttjs/MQTT.js/workflows/MQTT.js%20CI/badge.svg) [![codecov](https://codecov.io/gh/mqttjs/MQTT.js/branch/master/graph/badge.svg)](https://codecov.io/gh/mqttjs/MQTT.js)
 
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/mqttjs/MQTT.js/graphs/commit-activity)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/mqttjs/MQTT.js/pulls)
+
+[![node](https://img.shields.io/node/v/mqtt.svg) ![npm](https://img.shields.io/npm/v/mqtt.svg?logo=npm) ![NPM Downloads](https://img.shields.io/npm/dm/mqtt.svg)](https://www.npmjs.com/package/mqtt)
+
 MQTT.js is a client library for the [MQTT](http://mqtt.org/) protocol, written
 in JavaScript for node.js and the browser.
 
-> MQTT [5.0.0-beta.0](https://github.com/mqttjs/MQTT.js/releases/tag/v5.0.0-beta.0) is now available! Try it out and give us feedback! `npm i mqtt@5.0.0-beta.0`
-
 ## Table of Contents
 
-- [**MQTT.js vNext**](#vnext)
 - [Upgrade notes](#notes)
 - [Installation](#install)
 - [Example](#example)
+- [React Native](#react-native)
 - [Import Styles](#example)
 - [Command Line Tools](#cli)
 - [API](#api)
@@ -29,17 +32,15 @@ MQTT.js is an OPEN Open Source Project, see the [Contributing](#contributing) se
 [![JavaScript Style
 Guide](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
 
-<a name="vnext"></a>
-
-## Next major version of MQTT.js
-
-There is work being done on the next generation of MQTT.js (vNext). We invite the community to provide their contributions [this repository](https://github.com/mqttjs/mqttjs-v5)
-
 <a name="notes"></a>
 
 ## Important notes for existing users
 
-**v5.0.0** (**BETA** 06/2023) removes support for all end of life node versions (v12 and v14), and now supports node v18 and v20.
+**v5.0.0** (07/2023)
+
+- Removes support for all end of life node versions (v12 and v14), and now supports node v18 and v20.
+- Completely rewritten in Typescript 🚀.
+- When creating `MqttClient` instance `new` is now required.
 
 **v4.0.0** (Released 04/2020) removes support for all end of life node versions, and now supports node v12 and v14. It also adds improvements to
 debug logging, along with some feature additions.
@@ -96,15 +97,15 @@ For the sake of simplicity, let's put the subscriber and the publisher in the sa
 const mqtt = require("mqtt");
 const client = mqtt.connect("mqtt://test.mosquitto.org");
 
-client.on("connect", function () {
-  client.subscribe("presence", function (err) {
+client.on("connect", () => {
+  client.subscribe("presence", (err) => {
     if (!err) {
       client.publish("presence", "Hello mqtt");
     }
   });
 });
 
-client.on("message", function (topic, message) {
+client.on("message", (topic, message) => {
   // message is Buffer
   console.log(message.toString());
   client.end();
@@ -113,9 +114,15 @@ client.on("message", function (topic, message) {
 
 output:
 
-```
+```sh
 Hello mqtt
 ```
+
+<a name="example-react-native"></a>
+
+### React Native
+
+MQTT.js can be used in React Native applications. To use it, see the [React Native example](https://github.com/MaximoLiberata/react-native-mqtt.js-example)
 
 If you want to run your own MQTT broker, you can use
 [Mosquitto](http://mosquitto.org) or
@@ -126,8 +133,6 @@ You can also use a test instance: test.mosquitto.org.
 If you do not want to install a separate broker, you can try using the
 [Aedes](https://github.com/moscajs/aedes).
 
-to use MQTT.js in the browser see the [browserify](#browserify) section
-
 <a name="import_styles"></a>
 
 ## Import styles
@@ -135,16 +140,16 @@ to use MQTT.js in the browser see the [browserify](#browserify) section
 ### CommonJS (Require)
 
 ```js
-const mqtt = require("mqtt"); // require mqtt
-const client = mqtt.connect("est.mosquitto.org"); // create a client
+const mqtt = require("mqtt")  // require mqtt
+const client = mqtt.connect("mqtt://test.mosquitto.org")  // create a client
 ```
 
 ### ES6 Modules (Import)
 
-#### Aliased wildcard import
+#### Default import
 
 ```js
-import * as mqtt from "mqtt"; // import everything inside the mqtt module and give it the namespace "mqtt"
+import mqtt from "mqtt"; // import namespace "mqtt"
 let client = mqtt.connect("mqtt://test.mosquitto.org"); // create a client
 ```
 
@@ -154,12 +159,6 @@ let client = mqtt.connect("mqtt://test.mosquitto.org"); // create a client
 import { connect } from "mqtt"; // import connect from mqtt
 let client = connect("mqtt://test.mosquitto.org"); // create a client
 ```
-
-<a name="promises"></a>
-
-## Promise support
-
-If you want to use the new [async-await](https://blog.risingstack.com/async-await-node-js-7-nightly/) functionality in JavaScript, or just prefer using Promises instead of callbacks, [async-mqtt](https://github.com/mqttjs/async-mqtt) is a wrapper over MQTT.js which uses promises instead of callbacks when possible.
 
 <a name="cli"></a>
 
@@ -175,13 +174,13 @@ npm install mqtt -g
 
 Then, on one terminal
 
-```
+```sh
 mqtt sub -t 'hello' -h 'test.mosquitto.org' -v
 ```
 
 On another
 
-```
+```sh
 mqtt pub -t 'hello' -h 'test.mosquitto.org' -m 'from MQTT.js'
 ```
 
@@ -196,7 +195,6 @@ MQTT.js uses the [debug](https://www.npmjs.com/package/debug#cmd) package for de
 ```ps
 # (example using PowerShell, the VS Code default)
 $env:DEBUG='mqttjs*'
-
 ```
 
 <a name="reconnecting"></a>
@@ -223,7 +221,7 @@ either of the connection url or the client options at the time of a reconnect.
 
 Example (update clientId & username on each reconnect):
 
-```
+```js
     const transformWsUrl = (url, options, client) => {
       client.options.username = `token=${this.get_current_auth_token()}`;
       client.options.clientId = `${this.get_updated_clientId()}`;
@@ -246,6 +244,27 @@ use the latest auth token, you must have some outside mechanism running that
 handles application-level authentication refreshing so that the websocket
 connection can simply grab the latest valid token or signed url.
 
+#### Customize Websockets with `createWebsocket` (Websocket Only)
+
+When you need to add a custom websocket subprotocol or header to open a connection
+through a proxy with custom authentication this callback allows you to create your own
+instance of a websocket which will be used in the mqtt client.
+
+```js
+  const createWebsocket = (url, websocketSubProtocols, options) => {
+    const subProtocols = [
+      websocketSubProtocols[0],
+      'myCustomSubprotocolOrOAuthToken',
+    ]
+    return new WebSocket(url, subProtocols)
+  }
+
+  const client = await mqtt.connectAsync(<wss url>, {
+    ...,
+    createWebsocket: createWebsocket,
+  });
+```
+
 #### Enabling Reconnection with `reconnectPeriod` option
 
 To ensure that the mqtt client automatically tries to reconnect when the
@@ -255,6 +274,13 @@ the final connection when it drops.
 
 The default value is 1000 ms which means it will try to reconnect 1 second
 after losing the connection.
+
+Note that this will only enable reconnects after either a connection timeout, or
+after a successful connection. It will _not_ (by default) enable retrying
+connections that are actively denied with a CONNACK error by the server.
+
+To also enable automatic reconnects for CONNACK errors, set
+`reconnectOnConnackError: true`.
 
 <a name="topicalias"></a>
 
@@ -266,7 +292,7 @@ If the client sets the option `autoUseTopicAlias:true` then MQTT.js uses existin
 
 example scenario:
 
-```
+```bash
 1. PUBLISH topic:'t1', ta:1                   (register)
 2. PUBLISH topic:'t1'       -> topic:'', ta:1 (auto use existing map entry)
 3. PUBLISH topic:'t2', ta:1                   (register overwrite)
@@ -285,7 +311,7 @@ If no topic alias exists, then assign a new vacant topic alias automatically. If
 
 example scenario:
 
-```
+```bash
 The broker returns CONNACK (TopicAliasMaximum:3)
 1. PUBLISH topic:'t1' -> 't1', ta:1 (auto assign t1:1 and register)
 2. PUBLISH topic:'t1' -> ''  , ta:1 (auto use existing map entry)
@@ -300,23 +326,29 @@ Also user can manually register topic-alias pair using PUBLISH topic:'some', ta:
 
 ## API
 
-- <a href="#connect"><code>mqtt.<b>connect()</b></code></a>
-- <a href="#client"><code>mqtt.<b>Client()</b></code></a>
-- <a href="#publish"><code>mqtt.Client#<b>publish()</b></code></a>
-- <a href="#subscribe"><code>mqtt.Client#<b>subscribe()</b></code></a>
-- <a href="#unsubscribe"><code>mqtt.Client#<b>unsubscribe()</b></code></a>
-- <a href="#end"><code>mqtt.Client#<b>end()</b></code></a>
-- <a href="#removeOutgoingMessage"><code>mqtt.Client#<b>removeOutgoingMessage()</b></code></a>
-- <a href="#reconnect"><code>mqtt.Client#<b>reconnect()</b></code></a>
-- <a href="#handleMessage"><code>mqtt.Client#<b>handleMessage()</b></code></a>
-- <a href="#connected"><code>mqtt.Client#<b>connected</b></code></a>
-- <a href="#reconnecting"><code>mqtt.Client#<b>reconnecting</b></code></a>
-- <a href="#getLastMessageId"><code>mqtt.Client#<b>getLastMessageId()</b></code></a>
-- <a href="#store"><code>mqtt.<b>Store()</b></code></a>
-- <a href="#put"><code>mqtt.Store#<b>put()</b></code></a>
-- <a href="#del"><code>mqtt.Store#<b>del()</b></code></a>
-- <a href="#createStream"><code>mqtt.Store#<b>createStream()</b></code></a>
-- <a href="#close"><code>mqtt.Store#<b>close()</b></code></a>
+- [`mqtt.connect()`](#connect)
+- [`mqtt.connectAsync()`](#connect-async)
+- [`mqtt.Client()`](#client)
+- [`mqtt.Client#connect()`](#client-connect)
+- [`mqtt.Client#publish()`](#publish)
+- [`mqtt.Client#publishAsync()`](#publish-async)
+- [`mqtt.Client#subscribe()`](#subscribe)
+- [`mqtt.Client#subscribeAsync()`](#subscribe-async)
+- [`mqtt.Client#unsubscribe()`](#unsubscribe)
+- [`mqtt.Client#unsubscribeAsync()`](#unsubscribe-async)
+- [`mqtt.Client#end()`](#end)
+- [`mqtt.Client#endAsync()`](#end-async)
+- [`mqtt.Client#removeOutgoingMessage()`](#removeOutgoingMessage)
+- [`mqtt.Client#reconnect()`](#reconnect)
+- [`mqtt.Client#handleMessage()`](#handleMessage)
+- [`mqtt.Client#connected`](#connected)
+- [`mqtt.Client#reconnecting`](#reconnecting)
+- [`mqtt.Client#getLastMessageId()`](#getLastMessageId)
+- [`mqtt.Store()`](#store)
+- [`mqtt.Store#put()`](#put)
+- [`mqtt.Store#del()`](#del)
+- [`mqtt.Store#createStream()`](#createStream)
+- [`mqtt.Store#close()`](#close)
 
 ---
 
@@ -328,7 +360,9 @@ Connects to the broker specified by the given url and options and
 returns a [Client](#client).
 
 The URL can be on the following protocols: 'mqtt', 'mqtts', 'tcp',
-'tls', 'ws', 'wss', 'wxs', 'alis'. The URL can also be an object as returned by
+'tls', 'ws', 'wss', 'wxs', 'alis'. If you are trying to connect to a unix socket just append the `+unix` suffix to the protocol (ex: `mqtt+unix`). This will set the `unixSocket` property automatically.
+
+The URL can also be an object as returned by
 [`URL.parse()`](http://nodejs.org/api/url.html#url_url_parse_urlstr_parsequerystring_slashesdenotehost),
 in that case the two objects are merged, i.e. you can pass a single
 object with both the URL and the connect options.
@@ -340,6 +374,20 @@ at every connect.
 For all MQTT-related options, see the [Client](#client)
 constructor.
 
+<a name="connect-async"></a>
+
+### connectAsync([url], options)
+
+Asynchronous wrapper around the [`connect`](#connect) function.
+
+Returns a `Promise` that resolves to a `mqtt.Client` instance when the client
+fires a `'connect'` or `'end'` event, or rejects with an error if the `'error'`
+is fired.
+
+Note that the `manualConnect` option will cause the promise returned by this
+function to never resolve or reject as the underlying client never fires any
+events.
+
 ---
 
 <a name="client"></a>
@@ -349,6 +397,7 @@ constructor.
 The `Client` class wraps a client connection to an
 MQTT broker over an arbitrary transport method (TCP, TLS,
 WebSocket, ecc).
+`Client` is an [EventEmitter](https://nodejs.org/en/learn/asynchronous-work/the-nodejs-event-emitter) that has it's own [events](#events)
 
 `Client` automatically handles the following:
 
@@ -363,7 +412,7 @@ The arguments are:
   the `connect` event. Typically a `net.Socket`.
 - `options` is the client connection options (see: the [connect packet](https://github.com/mcollina/mqtt-packet#connect)). Defaults:
   - `wsOptions`: is the WebSocket connection options. Default is `{}`.
-    It's specific for WebSockets. For possible options have a look at: https://github.com/websockets/ws/blob/master/doc/ws.md.
+    It's specific for WebSockets. For possible options have a look at: <https://github.com/websockets/ws/blob/master/doc/ws.md>.
   - `keepalive`: `60` seconds, set to `0` to disable
   - `reschedulePings`: reschedule ping messages after sending packets (default `true`)
   - `clientId`: `'mqttjs_' + Math.random().toString(16).substr(2, 8)`
@@ -373,6 +422,8 @@ The arguments are:
     offline
   - `reconnectPeriod`: `1000` milliseconds, interval between two
     reconnections. Disable auto reconnect by setting to `0`.
+  - `reconnectOnConnackError`: `false`, whether to also reconnect if a CONNACK
+    is received with an error.
   - `connectTimeout`: `30 * 1000` milliseconds, time to wait before a
     CONNACK is received
   - `username`: the username required by your broker, if any
@@ -381,9 +432,11 @@ The arguments are:
   - `outgoingStore`: a [Store](#store) for the outgoing packets
   - `queueQoSZero`: if connection is broken, queue outgoing QoS zero messages (default `true`)
   - `customHandleAcks`: MQTT 5 feature of custom handling puback and pubrec packets. Its callback:
+
     ```js
-      customHandleAcks: function(topic, message, packet, done) {/*some logic wit colling done(error, reasonCode)*/}
+      customHandleAcks: function(topic, message, packet, done) {/*some logic with calling done(error, reasonCode)*/}
     ```
+
   - `autoUseTopicAlias`: enabling automatic Topic Alias using functionality
   - `autoAssignTopicAlias`: enabling automatic Topic Alias assign functionality
   - `properties`: properties MQTT 5.0.
@@ -415,16 +468,26 @@ The arguments are:
   - `transformWsUrl` : optional `(url, options, client) => url` function
     For ws/wss protocols only. Can be used to implement signing
     urls which upon reconnect can have become expired.
+  - `createWebsocket` : optional `url, websocketSubProtocols, options) => Websocket` function
+      For ws/wss protocols only. Can be used to implement a custom websocket subprotocol or implementation.
   - `resubscribe` : if connection is broken and reconnects,
     subscribed topics are automatically subscribed again (default `true`)
   - `messageIdProvider`: custom messageId provider. when `new UniqueMessageIdProvider()` is set, then non conflict messageId is provided.
+  - `log`: custom log function. Default uses [debug](https://www.npmjs.com/package/debug) package.
+  - `manualConnect`: prevents the constructor to call `connect`. In this case after the `mqtt.connect` is called you should call `client.connect` manually.
+  - `timerVariant`: defaults to `auto`, which tries to determine which timer is most appropriate for you environment, if you're having detection issues, you can set it to `worker` or `native`. If none suits you, you can pass a timer object with set and clear properties:
+    ```js
+    timerVariant: {
+      set: (func, timer) => setInterval(func, timer),
+      clear: (id) => clearInterval(id)
+    }
+    ```
+  - `forceNativeWebSocket`: set to true if you're having detection issues (i.e. the `ws does not work in the browser` exception) to force the use of native WebSocket. It is important to note that if set to true for the first client created, then all the clients will use native WebSocket. And conversely, if not set or set to false, all will use the detection result.
+  - `unixSocket`: if you want to connect to a unix socket, set this to true
 
-In case mqtts (mqtt over tls) is required, the `options` object is
-passed through to
-[`tls.connect()`](http://nodejs.org/api/tls.html#tls_tls_connect_options_callback).
-If you are using a **self-signed certificate**, pass the `rejectUnauthorized: false` option.
-Beware that you are exposing yourself to man in the middle attacks, so it is a configuration
-that is not recommended for production environments.
+In case mqtts (mqtt over tls) is required, the `options` object is passed through to [`tls.connect()`](http://nodejs.org/api/tls.html#tls_tls_connect_options_callback). If using a **self-signed certificate**, set `rejectUnauthorized: false`. However, be cautious as this exposes you to potential man in the middle attacks and isn't recommended for production.
+
+For those supporting multiple TLS protocols on a single port, like MQTTS and MQTT over WSS, utilize the `ALPNProtocols` option. This lets you define the Application Layer Protocol Negotiation (ALPN) protocol. You can set `ALPNProtocols` as a string array, Buffer, or Uint8Array based on your setup.
 
 If you are connecting to a broker that supports only MQTT 3.1 (not
 3.1.1 compliant), you should pass these additional options:
@@ -438,6 +501,8 @@ If you are connecting to a broker that supports only MQTT 3.1 (not
 
 This is confirmed on RabbitMQ 3.2.4, and on Mosquitto < 1.3. Mosquitto
 version 1.3 and 1.4 works fine without those.
+
+<a name="events"></a>
 
 #### Event `'connect'`
 
@@ -491,7 +556,7 @@ The following TLS errors will be emitted as an `error` event:
 
 `function () {}`
 
-Emitted when <a href="#end"><code>mqtt.Client#<b>end()</b></code></a> is called.
+Emitted when [`mqtt.Client#end()`](#end) is called.
 If a callback was passed to `mqtt.Client#end()`, this event is emitted once the
 callback returns.
 
@@ -529,6 +594,12 @@ and connections
 
 ---
 
+<a name="client-connect"></a>
+
+### mqtt.Client#connect()
+
+By default client connects when constructor is called. To prevent this you can set `manualConnect` option to `true` and call `client.connect()` manually.
+
 <a name="publish"></a>
 
 ### mqtt.Client#publish(topic, message, [options], [callback])
@@ -551,9 +622,16 @@ Publish a message to a topic
     - `subscriptionIdentifier`: representing the identifier of the subscription `number`,
     - `contentType`: String describing the content of the Application Message `string`
   - `cbStorePut` - `function ()`, fired when message is put into `outgoingStore` if QoS is `1` or `2`.
-- `callback` - `function (err)`, fired when the QoS handling completes,
+- `callback` - `function (err, packet)`, fired when the QoS handling completes,
   or at the next tick if QoS 0. An error occurs if client is disconnecting.
 
+<a name="publish-async"></a>
+
+### mqtt.Client#publishAsync(topic, message, [options])
+
+Async [`publish`](#publish). Returns a `Promise<Packet | undefined>`.
+
+A packet is anything that has a `messageId` property.
 ---
 
 <a name="subscribe"></a>
@@ -581,6 +659,12 @@ Subscribe to a topic or topics
     - `topic` is a subscribed to topic
     - `qos` is the granted QoS level on it
 
+<a name="subscribe-async"></a>
+
+### mqtt.Client#subscribeAsync(topic/topic array/topic object, [options])
+
+Async [`subscribe`](#subscribe). Returns a `Promise<ISubscriptionGrant[]>`.
+
 ---
 
 <a name="unsubscribe"></a>
@@ -594,6 +678,12 @@ Unsubscribe from a topic or topics
   - `properties`: `object`
     - `userProperties`: The User Property is allowed to appear multiple times to represent multiple name, value pairs `object`
 - `callback` - `function (err)`, fired on unsuback. An error occurs if client is disconnecting.
+
+<a name="unsubscribe-async"></a>
+
+### mqtt.Client#unsubscribeAsync(topic/topic array, [options])
+
+Async [`unsubscribe`](#unsubscribe). Returns a `Promise<void>`.
 
 ---
 
@@ -615,6 +705,12 @@ Close the client, accepts the following options:
     - `serverReference`: String which can be used by the Client to identify another Server to use `string`
 - `callback`: will be called when the client is closed. This parameter is
   optional.
+
+<a name="end-async"></a>
+
+### mqtt.Client#endAsync([force], [options])
+
+Async [`end`](#end). Returns a `Promise<void>`.
 
 ---
 
@@ -733,115 +829,56 @@ The callback is called when the packet has been removed.
 Closes the Store.
 
 <a name="browser"></a>
+<a name="webpack"></a>
+<a name="vite"></a>
 
 ## Browser
+
+> [!IMPORTANT]
+> The only protocol supported in browsers is MQTT over WebSockets, so you must use `ws://` or `wss://` protocols.
+
+While the [ws](https://www.npmjs.com/package/ws) module is used in NodeJS, [WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket) is used in browsers. This is totally transparent to users except for the following:
+
+- The `wsOption` is not supported in browsers.
+- Browsers doesn't allow to catch many WebSocket errors for [security reasons](https://stackoverflow.com/a/31003057) as:
+
+  > Access to this information could allow a malicious Web page to gain information about your network, so they require browsers report all connection-time errors in an indistinguishable way.
+
+  So listening for `client.on('error')` may not catch all the errors you would get in NodeJS env.
+
+### Bundle
+
+MQTT.js is bundled using [esbuild](https://esbuild.github.io/). It is tested working with all bundlers like Webpack, Vite and React.
+
+You can find all mqtt bundles versions in `dist` folder:
+
+- `mqtt.js` - iife format, not minified
+- `mqtt.min.js` - iife format, minified
+- `mqtt.esm.js` - esm format minified
+
+Starting from MQTT.js > 5.2.0 you can import mqtt in your code like this:
+
+```js
+import mqtt from 'mqtt'
+```
+
+This will be automatically handled by your bundler.
+
+Otherwise you can choose to use a specific bundle like:
+
+```js
+import * as mqtt from 'mqtt/dist/mqtt'
+import * as mqtt from 'mqtt/dist/mqtt.min'
+import mqtt from 'mqtt/dist/mqtt.esm'
+```
 
 <a name="cdn"></a>
 
 ### Via CDN
 
-The MQTT.js bundle is available through http://unpkg.com, specifically
-at https://unpkg.com/mqtt/dist/mqtt.min.js.
-See http://unpkg.com for the full documentation on version ranges.
-
-<a name="browserify"></a>
-
-### Browserify
-
-In order to use MQTT.js as a browserify module you can either require it in your browserify bundles or build it as a stand alone module. The exported module is AMD/CommonJs compatible and it will add an object in the global space.
-
-```bash
-mkdir tmpdir
-cd tmpdir
-npm install mqtt
-npm install browserify
-npm install tinyify
-cd node_modules/mqtt/
-npm install .
-npx browserify mqtt.js -s mqtt >browserMqtt.js // use script tag
-# show size for compressed browser transfer
-gzip <browserMqtt.js | wc -c
-```
-
-**Be sure to only use this bundle with `ws` or `wss` URLs in the browser. Others URL types will likey fail**
-
-<a name="webpack"></a>
-
-### Webpack
-
-Just like browserify, export MQTT.js as library. The exported module would be `const mqtt = xxx` and it will add an object in the global space. You could also export module in other [formats (AMD/CommonJS/others)](http://webpack.github.io/docs/configuration.html#output-librarytarget) by setting **output.libraryTarget** in webpack configuration.
-
-```javascript
-npm install -g webpack // install webpack
-
-cd node_modules/mqtt
-npm install . // install dev dependencies
-webpack mqtt.js ./browserMqtt.js --output-library mqtt
-```
-
-you can then use mqtt.js in the browser with the same api than node's one.
-
-```html
-<html>
-  <head>
-    <title>test Ws mqtt.js</title>
-  </head>
-  <body>
-    <script src="./browserMqtt.js"></script>
-    <script>
-      const client = mqtt.connect(); // you add a ws:// url here
-      client.subscribe("mqtt/demo");
-
-      client.on("message", function (topic, payload) {
-        alert([topic, payload].join(": "));
-        client.end();
-      });
-
-      client.publish("mqtt/demo", "hello world!");
-    </script>
-  </body>
-</html>
-```
-
-### React
-
-```
-npm install -g webpack                    // Install webpack globally
-npm install mqtt                          // Install MQTT library
-cd node_modules/mqtt
-npm install .                             // Install dev deps at current dir
-webpack mqtt.js --output-library mqtt     // Build
-
-// now you can import the library with ES6 import, commonJS not tested
-```
-
-```javascript
-import React from 'react';
-import mqtt from 'mqtt';
-
-export default () => {
-  const [connectionStatus, setConnectionStatus] = React.useState(false);
-  const [messages, setMessages] = React.useState([]);
-
-  useEffect(() => {
-    const client = mqtt.connect(SOME_URL);
-    client.on('connect', () => setConnectionStatus(true));
-    client.on('message', (topic, payload, packet) => {
-      setMessages(messages.concat(payload.toString()));
-    });
-  }, []);
-
-  return (
-    <>
-     {messages.map((message) => (
-        <h2>{message}</h2>
-     )
-    </>
-  )
-}
-```
-
-Your broker should accept websocket connection (see [MQTT over Websockets](https://github.com/moscajs/aedes/blob/master/docs/Examples.md#mqtt-server-over-websocket-using-server-factory) to setup [Aedes](https://github.com/moscajs/aedes)).
+The MQTT.js bundle is available through <http://unpkg.com>, specifically
+at <https://unpkg.com/mqtt/dist/mqtt.min.js>.
+See <http://unpkg.com> for the full documentation on version ranges.
 
 <a name="qos"></a>
 
@@ -859,25 +896,13 @@ About data consumption, obviously, QoS 2 > QoS 1 > QoS 0, if that's a concern to
 
 ## Usage with TypeScript
 
-This repo bundles TypeScript definition files for use in TypeScript projects and to support tools that can read `.d.ts` files.
+Starting from v5 this project is written in TypeScript and the type definitions are included in the package.
 
-### Pre-requisites
+Example:
 
-Before you can begin using these TypeScript definitions with your project, you need to make sure your project meets these requirements:
-
-- TypeScript >= 2.1
-- Set tsconfig.json: `{"compilerOptions" : {"moduleResolution" : "node"}, ...}`
-- Includes the TypeScript definitions for Node and [ws](https://www.npmjs.com/package/ws). These types are used as
-  parameters to some of the MQTT client's APIs and if you don't install them they get treated as `any`, which means you lose type
-  safety.
-  Use npm to install them by typing the following into a terminal window:
-  `npm install --save-dev @types/node @types/ws`
-
-### TypeScript example
-
-```
-import * as mqtt from "mqtt"
-let client : mqtt.MqttClient = mqtt.connect('mqtt://test.mosquitto.org')
+```ts
+import { connect } from "mqtt"
+const client = connect('mqtt://test.mosquitto.org')
 ```
 
 <a name="weapp-alipay"></a>
@@ -889,8 +914,12 @@ let client : mqtt.MqttClient = mqtt.connect('mqtt://test.mosquitto.org')
 Supports [WeChat Mini Program](https://mp.weixin.qq.com/). Use the `wxs` protocol. See [the WeChat docs](https://mp.weixin.qq.com/debug/wxadoc/dev/api/network-socket.html).
 
 ```js
+import 'abortcontroller-polyfill/dist/abortcontroller-polyfill-only' // import before mqtt.
+import 'esbuild-plugin-polyfill-node/polyfills/navigator'
 const mqtt = require("mqtt");
-const client = mqtt.connect("wxs://test.mosquitto.org");
+const client = mqtt.connect("wxs://test.mosquitto.org", {
+  timerVariant: 'native' // more info ref issue: #1797
+});
 ```
 
 ### Ali Mini Program
